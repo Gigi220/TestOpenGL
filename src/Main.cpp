@@ -118,7 +118,7 @@ int main()
 		// Обновляем цвет формы
 		GLfloat timeValue = glfwGetTime();
 		GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
-		sh.SetUniform("ourColor", greenValue);
+		sh.SetUniform("ourColor", Math::Vector3(0.0f, greenValue, 0.0f));
 
 		glBindVertexArray(VAO);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);

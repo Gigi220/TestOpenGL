@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include "Math/Vector3.h"
 
 #include <GL/glew.h>; // Подключаем glew для того, чтобы получить все необходимые заголовочные файлы OpenGL
 
@@ -99,10 +100,10 @@ public:
         glUseProgram(this->Program);
     }
 
-    void SetUniform(const GLchar* uniformName, const GLfloat& greenValue)
+    void SetUniform(const GLchar* uniformName, const Math::Vector3& vec)
     {
         GLint vertexColorLocation = glGetUniformLocation(Program, uniformName);
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        glUniform4f(vertexColorLocation, vec.x, vec.y, vec.z, 1.0f);
     }
 
 public:
