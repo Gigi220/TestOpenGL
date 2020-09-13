@@ -100,6 +100,12 @@ public:
         glUseProgram(this->Program);
     }
 
+    void SetUniform(const GLchar* uniformName, const float value)
+    {
+        GLint vertexColorLocation = glGetUniformLocation(Program, uniformName);
+        glUniform1f(vertexColorLocation, value);
+    }
+
     void SetUniform(const GLchar* uniformName, const Math::Vector3& vec)
     {
         GLint vertexColorLocation = glGetUniformLocation(Program, uniformName);

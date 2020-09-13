@@ -139,7 +139,7 @@ namespace Math
 		
 	private:
 		// Порівнює два числа на приблизну рівність
-		constexpr bool IsEqualFloat(float float1, float float2, float delta = 0.00001f) {
+		constexpr bool IsEqualFloat(float float1, float float2, float delta = 0.00001f) const {
 			return (float1 + delta >= float2) && (float1 - delta <= float2);
 		}
 
