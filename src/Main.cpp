@@ -3,10 +3,11 @@
 // GLEW нужно подключать до GLFW.
 // GLEW
 #define GLEW_STATIC
-#include <GL/glew.h>
+#include "GL/glew.h"
 // GLFW
-#include <GLFW/glfw3.h>
+#include "GLFW/glfw3.h"
 #include "ShaderProgram.h"
+#include "SOIL2/SOIL2.h"
 
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
