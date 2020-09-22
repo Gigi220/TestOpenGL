@@ -9,7 +9,7 @@
 #include <iostream>
 #include "Math/Vector3.h"
 
-#include <GL/glew.h>; // Подключаем glew для того, чтобы получить все необходимые заголовочные файлы OpenGL
+#include "GL/glew.h"; // Подключаем glew для того, чтобы получить все необходимые заголовочные файлы OpenGL
 
 class ShaderProgram
 {
