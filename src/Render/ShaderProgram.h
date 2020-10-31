@@ -8,8 +8,9 @@
 #include <sstream>
 #include <iostream>
 #include "Math/Vector3.h"
+#include "Math/Vector2.h"
 
-#include "GL/glew.h"; // Подключаем glew для того, чтобы получить все необходимые заголовочные файлы OpenGL
+#include "GL/glew.h" // Подключаем glew для того, чтобы получить все необходимые заголовочные файлы OpenGL
 
 class ShaderProgram
 {
@@ -91,7 +92,6 @@ public:
         // Удаляем шейдеры, поскольку они уже в программе и нам больше не нужны.
         glDeleteShader(vertex);
         glDeleteShader(fragment);
-
     }
 
     // Использование программы
@@ -100,16 +100,30 @@ public:
         glUseProgram(this->Program);
     }
 
-    void SetUniform(const GLchar* uniformName, const float value)
+    void SetUniform1f(const GLchar* uniformName, const float value)
     {
-        GLint vertexColorLocation = glGetUniformLocation(Program, uniformName);
-        glUniform1f(vertexColorLocation, value);
+        glUniform1f(glGetUniformLocation(Program, uniformName), value);
     }
 
-    void SetUniform(const GLchar* uniformName, const Math::Vector3& vec)
+    void SetUniform1i(const GLchar* uniformName, const int value)
     {
-        GLint vertexColorLocation = glGetUniformLocation(Program, uniformName);
-        glUniform4f(vertexColorLocation, vec.x, vec.y, vec.z, 1.0f);
+        glUniform1i(glGetUniformLocation(Program, uniformName), value);
+    }
+
+    void SetUniform2f(const GLchar* uniformName, const Math::Vector2& vec2)
+    {
+        glUniform2f(glGetUniformLocation(Program, uniformName), vec2.x, vec2.y);
+    }
+
+    void SetUniform3f(const GLchar* uniformName, const Math::Vector3& vec3)
+    {
+        glUniform3f(glGetUniformLocation(Program, uniformName), vec3.x, vec3.y, vec3.z);
+    }
+
+    // TODO Vector4
+    void SetUniform4f(const GLchar* uniformName, const Math::Vector3& vec4)
+    {
+        glUniform4f(glGetUniformLocation(Program, uniformName), vec4.x, vec4.y, vec4.z, 1.0f);
     }
 
 public:

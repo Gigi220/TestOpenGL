@@ -6,8 +6,10 @@
 #include "GL/glew.h"
 // GLFW
 #include "GLFW/glfw3.h"
-#include "ShaderProgram.h"
+#include "Render/ShaderProgram.h"
+#include "Render/Texture.h"
 #include "SOIL2/SOIL2.h"
+#include "SOIL2/stb_image.h"
 
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -30,7 +32,6 @@ int main()
 	//Выключение возможности изменения размера окна
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
 	if (window == nullptr)
 	{
@@ -52,7 +53,7 @@ int main()
 
 	glViewport(0, 0, WIDTH, HEIGHT);
 
-	ShaderProgram sh = ShaderProgram("../base/shaders/textures.vs", "../base/shaders/textures.fs");
+	ShaderProgram sh = ShaderProgram("../base/shaders/textures2.vs", "../base/shaders/textures2.fs");
 
 	GLfloat vertices[] = {
 		// Позиции          // Цвета             // Текстурные координаты
@@ -91,28 +92,10 @@ int main()
 
 	glBindVertexArray(0); // Отвязка VAO
 
-	// загрузка текстури
-	GLuint texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	// Встановлення режиму врапінга
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// Встановлення фільрації
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// загрузка .png
-	int imgWidth, imgHeight;
-	unsigned char* image = SOIL_load_image("../base/textures/container.jpg", &imgWidth, &imgHeight, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgWidth, imgHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	// очистка 
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-
-	// Режим отрісовкі
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// всі текстури будуть правильно зчитуватись відносно Y-осі 
+	stbi_set_flip_vertically_on_load(true);
+	Render::Texture texture1("../base/textures/container.jpg");
+	Render::Texture texture2("../base/textures/awesomeface.png");
 
 	// Игровой цикл
 	while (!glfwWindowShouldClose(window))
@@ -125,7 +108,12 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Bind Texture
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1.GetData());
+		sh.SetUniform1i("ourTexture1", 0);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2.GetData());
+		sh.SetUniform1i("ourTexture2", 1);
 
 		// Використання шейдерів і отрісовка
 		sh.Use();
