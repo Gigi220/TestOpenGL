@@ -1,6 +1,7 @@
+п»ї// е­¦е­¦е­¦
 #include <iostream>
 
-// GLEW нужно подключать до GLFW.
+// GLEW РЅСѓР¶РЅРѕ РїРѕРґРєР»СЋС‡Р°С‚СЊ РґРѕ GLFW.
 // GLEW
 #define GLEW_STATIC
 #include "GL/glew.h"
@@ -10,6 +11,9 @@
 #include "Render/Texture.h"
 #include "SOIL2/SOIL2.h"
 #include "SOIL2/stb_image.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -19,17 +23,17 @@ const GLuint WIDTH = 800, HEIGHT = 600;
 
 int main()
 {
-	//Инициализация GLFW
+	//РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ GLFW
 	glfwInit();
-	//Настройка GLFW
-	//Задается минимальная требуемая версия OpenGL. 
-	//Мажорная 
+	//РќР°СЃС‚СЂРѕР№РєР° GLFW
+	//Р—Р°РґР°РµС‚СЃСЏ РјРёРЅРёРјР°Р»СЊРЅР°СЏ С‚СЂРµР±СѓРµРјР°СЏ РІРµСЂСЃРёСЏ OpenGL. 
+	//РњР°Р¶РѕСЂРЅР°СЏ 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	//Минорная
+	//РњРёРЅРѕСЂРЅР°СЏ
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	//Установка профайла для которого создается контекст
+	//РЈСЃС‚Р°РЅРѕРІРєР° РїСЂРѕС„Р°Р№Р»Р° РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ СЃРѕР·РґР°РµС‚СЃСЏ РєРѕРЅС‚РµРєСЃС‚
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	//Выключение возможности изменения размера окна
+	//Р’С‹РєР»СЋС‡РµРЅРёРµ РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂР° РѕРєРЅР°
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
@@ -53,18 +57,18 @@ int main()
 
 	glViewport(0, 0, WIDTH, HEIGHT);
 
-	ShaderProgram sh = ShaderProgram("../base/shaders/textures2.vs", "../base/shaders/textures2.fs");
+	ShaderProgram shader = ShaderProgram("../base/shaders/texturesMatrix.vs", "../base/shaders/textures2.fs");
 
 	GLfloat vertices[] = {
-		// Позиции          // Цвета             // Текстурные координаты
-		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // Верхний правый
-		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // Нижний правый
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // Нижний левый
-		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // Верхний левый
+		// РџРѕР·РёС†РёРё          // Р¦РІРµС‚Р°             // РўРµРєСЃС‚СѓСЂРЅС‹Рµ РєРѕРѕСЂРґРёРЅР°С‚С‹
+		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // Р’РµСЂС…РЅРёР№ РїСЂР°РІС‹Р№
+		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // РќРёР¶РЅРёР№ РїСЂР°РІС‹Р№
+		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // РќРёР¶РЅРёР№ Р»РµРІС‹Р№
+		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // Р’РµСЂС…РЅРёР№ Р»РµРІС‹Р№
 	};
-	GLuint indices[] = {  // Помните, что мы начинаем с 0!
-		0, 1, 3,   // Первый треугольник
-		1, 2, 3    // Второй треугольник
+	GLuint indices[] = {  // РџРѕРјРЅРёС‚Рµ, С‡С‚Рѕ РјС‹ РЅР°С‡РёРЅР°РµРј СЃ 0!
+		0, 1, 3,   // РџРµСЂРІС‹Р№ С‚СЂРµСѓРіРѕР»СЊРЅРёРє
+		1, 2, 3    // Р’С‚РѕСЂРѕР№ С‚СЂРµСѓРіРѕР»СЊРЅРёРє
 	};
 
 	GLuint VBO, VAO, IBO; // IBO = EBO  index buffer object
@@ -80,56 +84,62 @@ int main()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	// Атрибут с координатами
+	// РђС‚СЂРёР±СѓС‚ СЃ РєРѕРѕСЂРґРёРЅР°С‚Р°РјРё
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*) 0);
 	glEnableVertexAttribArray(0);
-	// Атрибут с цветом
+	// РђС‚СЂРёР±СѓС‚ СЃ С†РІРµС‚РѕРј
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*) (3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
-	// Атрибут с цветом
+	// РђС‚СЂРёР±СѓС‚ СЃ С†РІРµС‚РѕРј
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*) (6 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(2);
 
-	glBindVertexArray(0); // Отвязка VAO
+	glBindVertexArray(0); // РћС‚РІСЏР·РєР° VAO
 
-	// всі текстури будуть правильно зчитуватись відносно Y-осі 
+	// РІСЃС– С‚РµРєСЃС‚СѓСЂРё Р±СѓРґСѓС‚СЊ РїСЂР°РІРёР»СЊРЅРѕ Р·С‡РёС‚СѓРІР°С‚РёСЃСЊ РІС–РґРЅРѕСЃРЅРѕ Y-РѕСЃС– 
 	stbi_set_flip_vertically_on_load(true);
 	Render::Texture texture1("../base/textures/container.jpg");
 	Render::Texture texture2("../base/textures/awesomeface.png");
-
-	// Игровой цикл
+	
+	// РРіСЂРѕРІРѕР№ С†РёРєР»
 	while (!glfwWindowShouldClose(window))
 	{
-		// Проверяем события и вызываем функции обратного вызова.
+		// РџСЂРѕРІРµСЂСЏРµРј СЃРѕР±С‹С‚РёСЏ Рё РІС‹Р·С‹РІР°РµРј С„СѓРЅРєС†РёРё РѕР±СЂР°С‚РЅРѕРіРѕ РІС‹Р·РѕРІР°.
 		glfwPollEvents();
 
-		// Очистка буферу екрану
+		// РћС‡РёСЃС‚РєР° Р±СѓС„РµСЂСѓ РµРєСЂР°РЅСѓ
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Bind Texture
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1.GetData());
-		sh.SetUniform1i("ourTexture1", 0);
+		shader.SetUniform1i("ourTexture1", 0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2.GetData());
-		sh.SetUniform1i("ourTexture2", 1);
+		shader.SetUniform1i("ourTexture2", 1);
 
-		// Використання шейдерів і отрісовка
-		sh.Use();
+		glm::mat4 trans(1.0f);
+		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+		trans = glm::rotate(trans, (GLfloat) glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		shader.SetUniformMatrix4fv("transform", trans);
+
+		// Р’РёРєРѕСЂРёСЃС‚Р°РЅРЅСЏ С€РµР№РґРµСЂС–РІ С– РѕС‚СЂС–СЃРѕРІРєР°
+		shader.Use();
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
-		// Меняем буферы местами
+		// РњРµРЅСЏРµРј Р±СѓС„РµСЂС‹ РјРµСЃС‚Р°РјРё
 		glfwSwapBuffers(window);
 	}
-	// Видалення масиву вершин
+	// Р’РёРґР°Р»РµРЅРЅСЏ РјР°СЃРёРІСѓ РІРµСЂС€РёРЅ
 	glDeleteVertexArrays(1, &VAO);
-	// Видалення вершинного буфера
+	// Р’РёРґР°Р»РµРЅРЅСЏ РІРµСЂС€РёРЅРЅРѕРіРѕ Р±СѓС„РµСЂР°
 	glDeleteBuffers(1, &VBO);
-	// Видалення індексного буфера
+	// Р’РёРґР°Р»РµРЅРЅСЏ С–РЅРґРµРєСЃРЅРѕРіРѕ Р±СѓС„РµСЂР°
 	glDeleteBuffers(1, &IBO);
 
 	glfwTerminate();
@@ -138,8 +148,8 @@ int main()
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-	// Когда пользователь нажимает ESC, мы устанавливаем свойство WindowShouldClose в true, 
-	// и приложение после этого закроется
+	// РљРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°Р¶РёРјР°РµС‚ ESC, РјС‹ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЃРІРѕР№СЃС‚РІРѕ WindowShouldClose РІ true, 
+	// Рё РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕСЃР»Рµ СЌС‚РѕРіРѕ Р·Р°РєСЂРѕРµС‚СЃСЏ
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 }
