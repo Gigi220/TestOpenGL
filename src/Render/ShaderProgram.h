@@ -1,3 +1,4 @@
+п»ї// е­¦е­¦е­¦
 #pragma once
 
 #ifndef SHADER_H
@@ -9,36 +10,39 @@
 #include <iostream>
 #include "Math/Vector3.h"
 #include "Math/Vector2.h"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/glm.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
-#include "GL/glew.h" // Подключаем glew для того, чтобы получить все необходимые заголовочные файлы OpenGL
+#include "GL/glew.h" // РџРѕРґРєР»СЋС‡Р°РµРј glew РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РїРѕР»СѓС‡РёС‚СЊ РІСЃРµ РЅРµРѕР±С…РѕРґРёРјС‹Рµ Р·Р°РіРѕР»РѕРІРѕС‡РЅС‹Рµ С„Р°Р№Р»С‹ OpenGL
 
 class ShaderProgram
 {
 public:
-    // Конструктор считывает и собирает шейдер
+    // РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ СЃС‡РёС‚С‹РІР°РµС‚ Рё СЃРѕР±РёСЂР°РµС‚ С€РµР№РґРµСЂ
     ShaderProgram(const GLchar* vertexPath, const GLchar* fragmentPath)
     {
-        // 1. Получаем исходный код шейдера из filePath
+        // 1. РџРѕР»СѓС‡Р°РµРј РёСЃС…РѕРґРЅС‹Р№ РєРѕРґ С€РµР№РґРµСЂР° РёР· filePath
         std::string vertexCode;
         std::string fragmentCode;
         std::ifstream vShaderFile;
         std::ifstream fShaderFile;
-        // Удостоверимся, что ifstream объекты могут выкидывать исключения
+        // РЈРґРѕСЃС‚РѕРІРµСЂРёРјСЃСЏ, С‡С‚Рѕ ifstream РѕР±СЉРµРєС‚С‹ РјРѕРіСѓС‚ РІС‹РєРёРґС‹РІР°С‚СЊ РёСЃРєР»СЋС‡РµРЅРёСЏ
         vShaderFile.exceptions(std::ifstream::badbit);
         fShaderFile.exceptions(std::ifstream::badbit);
         try
         {
-            // Открываем файлы
+            // РћС‚РєСЂС‹РІР°РµРј С„Р°Р№Р»С‹
             vShaderFile.open(vertexPath);
             fShaderFile.open(fragmentPath);
             std::stringstream vShaderStream, fShaderStream;
-            // Считываем данные в потоки
+            // РЎС‡РёС‚С‹РІР°РµРј РґР°РЅРЅС‹Рµ РІ РїРѕС‚РѕРєРё
             vShaderStream << vShaderFile.rdbuf();
             fShaderStream << fShaderFile.rdbuf();
-            // Закрываем файлы
+            // Р—Р°РєСЂС‹РІР°РµРј С„Р°Р№Р»С‹
             vShaderFile.close();
             fShaderFile.close();
-            // Преобразовываем потоки в массив GLchar
+            // РџСЂРµРѕР±СЂР°Р·РѕРІС‹РІР°РµРј РїРѕС‚РѕРєРё РІ РјР°СЃСЃРёРІ GLchar
             vertexCode = vShaderStream.str();
             fragmentCode = fShaderStream.str();
         }
@@ -48,27 +52,27 @@ public:
         }
         const GLchar* vShaderCode = vertexCode.c_str();
         const GLchar* fShaderCode = fragmentCode.c_str();
-        // 2. Сборка шейдеров
+        // 2. РЎР±РѕСЂРєР° С€РµР№РґРµСЂРѕРІ
         GLuint vertex, fragment;
         GLint success;
         GLchar infoLog[512];
 
-        // Вершинный шейдер
+        // Р’РµСЂС€РёРЅРЅС‹Р№ С€РµР№РґРµСЂ
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);
-        // Если есть ошибки - вывести их
+        // Р•СЃР»Рё РµСЃС‚СЊ РѕС€РёР±РєРё - РІС‹РІРµСЃС‚Рё РёС…
         glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
         if (!success)
         {
             glGetShaderInfoLog(vertex, 512, NULL, infoLog);
             std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
         };
-        // Фрагментный шейдер
+        // Р¤СЂР°РіРјРµРЅС‚РЅС‹Р№ С€РµР№РґРµСЂ
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fShaderCode, NULL);
         glCompileShader(fragment);
-        // Если есть ошибки - вывести их
+        // Р•СЃР»Рё РµСЃС‚СЊ РѕС€РёР±РєРё - РІС‹РІРµСЃС‚Рё РёС…
         glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
         if (!success)
         {
@@ -76,12 +80,12 @@ public:
             std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
         }
 
-        // Шейдерная программа
+        // РЁРµР№РґРµСЂРЅР°СЏ РїСЂРѕРіСЂР°РјРјР°
         this->Program = glCreateProgram();
         glAttachShader(this->Program, vertex);
         glAttachShader(this->Program, fragment);
         glLinkProgram(this->Program);
-        // Если есть ошибки - вывести их
+        // Р•СЃР»Рё РµСЃС‚СЊ РѕС€РёР±РєРё - РІС‹РІРµСЃС‚Рё РёС…
         glGetProgramiv(this->Program, GL_LINK_STATUS, &success);
         if (!success)
         {
@@ -89,12 +93,12 @@ public:
             std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
         }
 
-        // Удаляем шейдеры, поскольку они уже в программе и нам больше не нужны.
+        // РЈРґР°Р»СЏРµРј С€РµР№РґРµСЂС‹, РїРѕСЃРєРѕР»СЊРєСѓ РѕРЅРё СѓР¶Рµ РІ РїСЂРѕРіСЂР°РјРјРµ Рё РЅР°Рј Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РЅС‹.
         glDeleteShader(vertex);
         glDeleteShader(fragment);
     }
 
-    // Использование программы
+    // РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ РїСЂРѕРіСЂР°РјРјС‹
     void Use()
     {
         glUseProgram(this->Program);
@@ -126,8 +130,13 @@ public:
         glUniform4f(glGetUniformLocation(Program, uniformName), vec4.x, vec4.y, vec4.z, 1.0f);
     }
 
+    void SetUniformMatrix4fv(const GLchar* uniformName, const glm::mat4& mat4)
+    {
+        glUniformMatrix4fv(glGetUniformLocation(Program, uniformName), 1, GL_FALSE, glm::value_ptr(mat4));
+    }
+
 public:
-    // Идентификатор программы
+    // РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїСЂРѕРіСЂР°РјРјС‹
     GLuint Program;
 };
 

@@ -1,3 +1,4 @@
+п»ї// е­¦е­¦е­¦
 #pragma once
 
 #ifndef _TEXTURE_H_
@@ -18,18 +19,18 @@ namespace Render
 			glGenTextures(1, &_texture);
 			glBindTexture(GL_TEXTURE_2D, _texture);
 
-			// Встановлення режиму врапінга
+			// Р’СЃС‚Р°РЅРѕРІР»РµРЅРЅСЏ СЂРµР¶РёРјСѓ РІСЂР°РїС–РЅРіР°
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			// Встановлення фільрації
+			// Р’СЃС‚Р°РЅРѕРІР»РµРЅРЅСЏ С„С–Р»СЊСЂР°С†С–С—
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-			// загрузка текстури
+			// Р·Р°РіСЂСѓР·РєР° С‚РµРєСЃС‚СѓСЂРё
 			unsigned char* image = stbi_load(fileName, &_width, &_height, &_nrChannels, SOIL_LOAD_RGB);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 			glGenerateMipmap(GL_TEXTURE_2D);
-			// очистка 
+			// РѕС‡РёСЃС‚РєР° 
 			stbi_image_free(image);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
