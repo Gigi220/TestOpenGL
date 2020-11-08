@@ -57,7 +57,7 @@ int main()
 
 	glViewport(0, 0, WIDTH, HEIGHT);
 
-	ShaderProgram shader = ShaderProgram("../base/shaders/texturesMatrix.vs", "../base/shaders/textures2.fs");
+	ShaderProgram shader = ShaderProgram("../base/shaders/texturesMatrix2.vs", "../base/shaders/textures2.fs");
 
 	GLfloat vertices[] = {
 		// Позиции          // Цвета             // Текстурные координаты
@@ -100,6 +100,9 @@ int main()
 	stbi_set_flip_vertically_on_load(true);
 	Render::Texture texture1("../base/textures/container.jpg");
 	Render::Texture texture2("../base/textures/awesomeface.png");
+
+
+
 	
 	// Игровой цикл
 	while (!glfwWindowShouldClose(window))
@@ -119,11 +122,20 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture2.GetData());
 		shader.SetUniform1i("ourTexture2", 1);
 
-		glm::mat4 trans(1.0f);
-		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-		trans = glm::rotate(trans, (GLfloat) glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-		shader.SetUniformMatrix4fv("transform", trans);
+		glm::mat4 model(1.0f);
+		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		glm::mat4 view(1.0f);
+		// Обратите внимание, что мы смещаем сцену в направлении обратном тому, в котором мы хотим переместиться
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		glm::mat4 projection(1.0f);
+		projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH / HEIGHT), 0.1f, 100.0f);
+
+
+
+		shader.SetUniformMatrix4fv("model", model);
+		shader.SetUniformMatrix4fv("view", view);
+		shader.SetUniformMatrix4fv("projection", projection);
 
 		// Використання шейдерів і отрісовка
 		shader.Use();
