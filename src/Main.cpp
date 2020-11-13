@@ -128,7 +128,6 @@ int main()
 	Render::Texture texture1("../base/textures/container.jpg");
 	Render::Texture texture2("../base/textures/awesomeface.png");
 
-
 	glm::vec3 cubePositions[] = {
 		  glm::vec3(0.0f,  0.0f,  0.0f),
 		  glm::vec3(2.0f,  5.0f, -15.0f),
@@ -141,7 +140,7 @@ int main()
 		  glm::vec3(1.5f,  0.2f, -1.5f),
 		  glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
-	
+
 	// Игровой цикл
 	while (!glfwWindowShouldClose(window))
 	{
@@ -160,25 +159,23 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture2.GetData());
 		shader.SetUniform1i("ourTexture2", 1);
 
-
 		// Використання шейдерів і отрісовка
 		shader.Use();
 
-		//glm::mat4 model(1.0f);
-		//model = glm::rotate(model, (GLfloat) glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-		glm::mat4 view(1.0f);
-		// Обратите внимание, что мы смещаем сцену в направлении обратном тому, в котором мы хотим переместиться
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		GLfloat radius = 10.0f;
+		GLfloat camX = sin(glfwGetTime()) * radius;
+		GLfloat camZ = cos(glfwGetTime()) * radius;
+		glm::mat4 view;
+		view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+
 		glm::mat4 projection(1.0f);
 		projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH / HEIGHT), 0.1f, 100.0f);
 
-		//shader.SetUniformMatrix4fv("model", model);
 		shader.SetUniformMatrix4fv("view", view);
 		shader.SetUniformMatrix4fv("projection", projection);
 
 
 		glBindVertexArray(VAO);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		for (GLuint i = 0; i < 10; i++)
 		{
 			glm::mat4 model(1.0f);
