@@ -7,19 +7,40 @@
 #include "GL/glew.h"
 // GLFW
 #include "GLFW/glfw3.h"
-#include "Render/ShaderProgram.h"
-#include "Render/Texture.h"
-#include "SOIL2/SOIL2.h"
-#include "SOIL2/stb_image.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-// Function prototypes
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+#include "SOIL2/SOIL2.h"
+#include "SOIL2/stb_image.h"
 
-// Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
+#include "Render/ShaderProgram.h"
+#include "Render/Texture.h"
+#include "Core/Camera.h"
+
+// прототипи функцій
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void do_movement();
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
+// Вікно
+const GLuint WIDTH = 1024, HEIGHT = 720;
+
+// Масив клавіш
+bool keys[1024];
+
+// Deltatimes
+GLfloat deltaTime = 0.0f;	// Час, пройдений між останнім і поточним кадром
+GLfloat lastFrame = 0.0f;  	// Час виводу останнього кадру
+
+// Налаштування мишкі
+GLfloat lastX = WIDTH / 2, lastY = HEIGHT / 2;
+GLfloat yaw = -90.0f; // рискання навколо oY
+GLfloat pitch = 0.0f; // тангаж навколо oX
+
+// field of view
+GLfloat fov = 45.0f; // тангаж навколо oX
 
 int main()
 {
@@ -44,9 +65,15 @@ int main()
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	// Set the required callback functions
-	glfwSetKeyCallback(window, key_callback);
 
+	// Колбекі
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+
+
+	// Захват курсора
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
@@ -56,7 +83,6 @@ int main()
 	}
 
 	glViewport(0, 0, WIDTH, HEIGHT);
-
 	glEnable(GL_DEPTH_TEST);
 
 	ShaderProgram shader = ShaderProgram("../base/shaders/texturesMatrix2.vs", "../base/shaders/textures2.fs");
@@ -128,7 +154,6 @@ int main()
 	Render::Texture texture1("../base/textures/container.jpg");
 	Render::Texture texture2("../base/textures/awesomeface.png");
 
-
 	glm::vec3 cubePositions[] = {
 		  glm::vec3(0.0f,  0.0f,  0.0f),
 		  glm::vec3(2.0f,  5.0f, -15.0f),
@@ -141,12 +166,22 @@ int main()
 		  glm::vec3(1.5f,  0.2f, -1.5f),
 		  glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
-	
+
+	auto&& camera = Camera::Instance();
+	camera.Position = glm::vec3(0.0f, 0.0f, 3.0f);
+	camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
+
 	// Игровой цикл
 	while (!glfwWindowShouldClose(window))
 	{
+		// Розрахунок дельти поточного кадру
+		GLfloat currentFrame = static_cast<GLfloat>(glfwGetTime());
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
 		// Проверяем события и вызываем функции обратного вызова.
 		glfwPollEvents();
+		do_movement();
 
 		// Очистка буферу екрану
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -160,25 +195,17 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture2.GetData());
 		shader.SetUniform1i("ourTexture2", 1);
 
-
 		// Використання шейдерів і отрісовка
 		shader.Use();
 
-		//glm::mat4 model(1.0f);
-		//model = glm::rotate(model, (GLfloat) glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-		glm::mat4 view(1.0f);
-		// Обратите внимание, что мы смещаем сцену в направлении обратном тому, в котором мы хотим переместиться
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 		glm::mat4 projection(1.0f);
-		projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH / HEIGHT), 0.1f, 100.0f);
+		projection = glm::perspective(glm::radians(fov), static_cast<float>(WIDTH / HEIGHT), 0.1f, 100.0f);
 
-		//shader.SetUniformMatrix4fv("model", model);
-		shader.SetUniformMatrix4fv("view", view);
+		shader.SetUniformMatrix4fv("view", camera.GetViewMatrix());
 		shader.SetUniformMatrix4fv("projection", projection);
 
 
 		glBindVertexArray(VAO);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		for (GLuint i = 0; i < 10; i++)
 		{
 			glm::mat4 model(1.0f);
@@ -209,4 +236,80 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	// и приложение после этого закроется
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key >= 0 && key < 1024)
+	{
+		if (action == GLFW_PRESS)
+			keys[key] = true;
+		else if (action == GLFW_RELEASE)
+			keys[key] = false;
+	}
 }
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	if (fov >= 1.0f && fov <= 45.0f)
+		fov -= static_cast<GLfloat>(yoffset);
+	if (fov <= 1.0f)
+		fov = 1.0f;
+	if (fov >= 45.0f)
+		fov = 45.0f;
+}
+
+void do_movement()
+{
+	auto&& camera = Camera::Instance();
+	// Управління камерою
+	GLfloat cameraSpeed = 1.5f * deltaTime;
+	if (keys[GLFW_KEY_W])
+	{
+		if (keys[GLFW_KEY_LEFT_SHIFT])
+			cameraSpeed *= 3.0f;
+		camera.Position += cameraSpeed * camera.Front;
+	}
+	if (keys[GLFW_KEY_S])
+		camera.Position -= cameraSpeed * camera.Front;
+	if (keys[GLFW_KEY_A])
+		camera.Position -= glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+	if (keys[GLFW_KEY_D])
+		camera.Position += glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+
+	/*if (keys[GLFW_MOUSE_BUTTON_RIGHT])
+		fov = 10.0f;
+	else if (!keys[GLFW_MOUSE_BUTTON_RIGHT])
+		fov = 45.0f;*/
+}
+
+bool firstMouse = true;
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (firstMouse) // эта переменная была проинициализирована значением true
+	{
+		lastX = static_cast<GLfloat>(xpos);
+		lastY = static_cast<GLfloat>(ypos);
+		firstMouse = false;
+	}
+
+	GLfloat xoffset = static_cast<GLfloat>(xpos) - lastX;
+	GLfloat yoffset = lastY - static_cast<GLfloat>(ypos); // Обратный порядок вычитания потому что оконные Y-координаты возрастают с верху вниз 
+	lastX = static_cast<GLfloat>(xpos);
+	lastY = static_cast<GLfloat>(ypos);
+
+	GLfloat sensitivity = 0.08f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+	front.y = sin(glm::radians(pitch));
+	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+	Camera::Instance().Front = glm::normalize(front);
+}
+
