@@ -15,11 +15,34 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-// Function prototypes
+// прототипи функцій
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void do_movement();
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-// Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
+// Вікно
+const GLuint WIDTH = 1024, HEIGHT = 720;
+
+// камера
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+// Масив клавіш
+bool keys[1024];
+
+// Deltatimes
+GLfloat deltaTime = 0.0f;	// Час, пройдений між останнім і поточним кадром
+GLfloat lastFrame = 0.0f;  	// Час виводу останнього кадру
+
+// Налаштування мишкі
+GLfloat lastX = WIDTH / 2, lastY = HEIGHT / 2;
+GLfloat yaw = -90.0f; // рискання навколо oY
+GLfloat pitch = 0.0f; // тангаж навколо oX
+
+// field of view
+GLfloat fov = 45.0f; // тангаж навколо oX
 
 int main()
 {
@@ -44,9 +67,15 @@ int main()
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	// Set the required callback functions
-	glfwSetKeyCallback(window, key_callback);
 
+	// Колбекі
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+
+
+	// Захват курсора
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
@@ -56,7 +85,6 @@ int main()
 	}
 
 	glViewport(0, 0, WIDTH, HEIGHT);
-
 	glEnable(GL_DEPTH_TEST);
 
 	ShaderProgram shader = ShaderProgram("../base/shaders/texturesMatrix2.vs", "../base/shaders/textures2.fs");
@@ -144,8 +172,14 @@ int main()
 	// Игровой цикл
 	while (!glfwWindowShouldClose(window))
 	{
+		// Розрахунок дельти поточного кадру
+		GLfloat currentFrame = static_cast<GLfloat>(glfwGetTime());
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
 		// Проверяем события и вызываем функции обратного вызова.
 		glfwPollEvents();
+		do_movement();
 
 		// Очистка буферу екрану
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -162,14 +196,11 @@ int main()
 		// Використання шейдерів і отрісовка
 		shader.Use();
 
-		GLfloat radius = 10.0f;
-		GLfloat camX = sin(glfwGetTime()) * radius;
-		GLfloat camZ = cos(glfwGetTime()) * radius;
 		glm::mat4 view;
-		view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		glm::mat4 projection(1.0f);
-		projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH / HEIGHT), 0.1f, 100.0f);
+		projection = glm::perspective(glm::radians(fov), static_cast<float>(WIDTH / HEIGHT), 0.1f, 100.0f);
 
 		shader.SetUniformMatrix4fv("view", view);
 		shader.SetUniformMatrix4fv("projection", projection);
@@ -206,4 +237,79 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	// и приложение после этого закроется
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key >= 0 && key < 1024)
+	{
+		if (action == GLFW_PRESS)
+			keys[key] = true;
+		else if (action == GLFW_RELEASE)
+			keys[key] = false;
+	}
 }
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	if (fov >= 1.0f && fov <= 45.0f)
+		fov -= yoffset;
+	if (fov <= 1.0f)
+		fov = 1.0f;
+	if (fov >= 45.0f)
+		fov = 45.0f;
+}
+
+void do_movement()
+{
+	// Управління камерою
+	GLfloat cameraSpeed = 1.5f * deltaTime;
+	if (keys[GLFW_KEY_W])
+	{
+		if (keys[GLFW_KEY_LEFT_SHIFT])
+			cameraSpeed *= 3.0f;
+		cameraPos += cameraSpeed * cameraFront;
+	}
+	if (keys[GLFW_KEY_S])
+		cameraPos -= cameraSpeed * cameraFront;
+	if (keys[GLFW_KEY_A])
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (keys[GLFW_KEY_D])
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
+	/*if (keys[GLFW_MOUSE_BUTTON_RIGHT])
+		fov = 10.0f;
+	else if (!keys[GLFW_MOUSE_BUTTON_RIGHT])
+		fov = 45.0f;*/
+}
+
+bool firstMouse = true;
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (firstMouse) // эта переменная была проинициализирована значением true
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	GLfloat xoffset = xpos - lastX;
+	GLfloat yoffset = lastY - ypos; // Обратный порядок вычитания потому что оконные Y-координаты возрастают с верху вниз 
+	lastX = xpos;
+	lastY = ypos;
+
+	GLfloat sensitivity = 0.08f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+	front.y = sin(glm::radians(pitch));
+	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+	cameraFront = glm::normalize(front);
+}
+
