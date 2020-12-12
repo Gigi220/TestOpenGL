@@ -7,13 +7,16 @@
 #include "GL/glew.h"
 // GLFW
 #include "GLFW/glfw3.h"
-#include "Render/ShaderProgram.h"
-#include "Render/Texture.h"
-#include "SOIL2/SOIL2.h"
-#include "SOIL2/stb_image.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+
+#include "SOIL2/SOIL2.h"
+#include "SOIL2/stb_image.h"
+
+#include "Render/ShaderProgram.h"
+#include "Render/Texture.h"
+#include "Core/Camera.h"
 
 // прототипи функцій
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -23,11 +26,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // Вікно
 const GLuint WIDTH = 1024, HEIGHT = 720;
-
-// камера
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 // Масив клавіш
 bool keys[1024];
@@ -169,6 +167,10 @@ int main()
 		  glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
+	auto&& camera = Camera::Instance();
+	camera.Position = glm::vec3(0.0f, 0.0f, 3.0f);
+	camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
+
 	// Игровой цикл
 	while (!glfwWindowShouldClose(window))
 	{
@@ -196,13 +198,10 @@ int main()
 		// Використання шейдерів і отрісовка
 		shader.Use();
 
-		glm::mat4 view;
-		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
 		glm::mat4 projection(1.0f);
 		projection = glm::perspective(glm::radians(fov), static_cast<float>(WIDTH / HEIGHT), 0.1f, 100.0f);
 
-		shader.SetUniformMatrix4fv("view", view);
+		shader.SetUniformMatrix4fv("view", camera.GetViewMatrix());
 		shader.SetUniformMatrix4fv("projection", projection);
 
 
@@ -249,7 +248,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	if (fov >= 1.0f && fov <= 45.0f)
-		fov -= yoffset;
+		fov -= static_cast<GLfloat>(yoffset);
 	if (fov <= 1.0f)
 		fov = 1.0f;
 	if (fov >= 45.0f)
@@ -258,20 +257,21 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void do_movement()
 {
+	auto&& camera = Camera::Instance();
 	// Управління камерою
 	GLfloat cameraSpeed = 1.5f * deltaTime;
 	if (keys[GLFW_KEY_W])
 	{
 		if (keys[GLFW_KEY_LEFT_SHIFT])
 			cameraSpeed *= 3.0f;
-		cameraPos += cameraSpeed * cameraFront;
+		camera.Position += cameraSpeed * camera.Front;
 	}
 	if (keys[GLFW_KEY_S])
-		cameraPos -= cameraSpeed * cameraFront;
+		camera.Position -= cameraSpeed * camera.Front;
 	if (keys[GLFW_KEY_A])
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.Position -= glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
 	if (keys[GLFW_KEY_D])
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.Position += glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
 
 	/*if (keys[GLFW_MOUSE_BUTTON_RIGHT])
 		fov = 10.0f;
@@ -284,15 +284,15 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (firstMouse) // эта переменная была проинициализирована значением true
 	{
-		lastX = xpos;
-		lastY = ypos;
+		lastX = static_cast<GLfloat>(xpos);
+		lastY = static_cast<GLfloat>(ypos);
 		firstMouse = false;
 	}
 
-	GLfloat xoffset = xpos - lastX;
-	GLfloat yoffset = lastY - ypos; // Обратный порядок вычитания потому что оконные Y-координаты возрастают с верху вниз 
-	lastX = xpos;
-	lastY = ypos;
+	GLfloat xoffset = static_cast<GLfloat>(xpos) - lastX;
+	GLfloat yoffset = lastY - static_cast<GLfloat>(ypos); // Обратный порядок вычитания потому что оконные Y-координаты возрастают с верху вниз 
+	lastX = static_cast<GLfloat>(xpos);
+	lastY = static_cast<GLfloat>(ypos);
 
 	GLfloat sensitivity = 0.08f;
 	xoffset *= sensitivity;
@@ -310,6 +310,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
 	front.y = sin(glm::radians(pitch));
 	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
-	cameraFront = glm::normalize(front);
+	Camera::Instance().Front = glm::normalize(front);
 }
 
