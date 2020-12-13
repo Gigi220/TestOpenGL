@@ -1,35 +1,19 @@
 ﻿// 学学学
 
 #include "SceneObjectAsset.h"
+#include "../pugi/pugixml.hpp"
 
 namespace Resources
 {
 	bool SceneObjectAsset::Load()
 	{
-		System::Xml::XmlTextReader reader("");
+		pugi::xml_document doc;
 
-		while (reader.Read())
+		pugi::xml_parse_result result = doc.load_file("../../base/objects/cube_test.xml");
+
+		if (result == pugi::xml_parse_status::status_ok)
 		{
-			switch (reader.NodeType)
-			{
-				case System::Xml::XmlNodeType::Element:
-					if (reader.Name == "asset")
-					{
-						while (reader.MoveToNextAttribute())
-						{
-							if (reader.Name == "id")
-							{
-								std::string f = reader.Value;
-								SetAssetId(f);
-							}
-						}
-					}
-					break;
-				case System::Xml::XmlNodeType::Text: //Display the text in each element.
-					break;
-				case System::Xml::XmlNodeType::EndElement: //Display the end of the element.
-					break;
-			}
+			return true;
 		}
 
 		return false;
