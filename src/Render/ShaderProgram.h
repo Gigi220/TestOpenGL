@@ -1,8 +1,8 @@
 ﻿// 学学学
 #pragma once
 
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef _SHADER_H_
+#define _SHADER_H_
 
 #include <string>
 #include <fstream>
@@ -140,4 +140,4 @@ public:
     GLuint Program;
 };
 
-#endif
+#endif // !_SHADER_H

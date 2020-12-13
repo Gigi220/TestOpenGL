@@ -1,8 +1,8 @@
 ﻿// 学学学
 #pragma once
 
-#ifndef _SINGLETON_H
-#define _SINGLETON_H
+#ifndef _SINGLETON_H_
+#define _SINGLETON_H_
 
 template <typename T>
 class Singleton
@@ -19,7 +19,7 @@ public:
 
 protected:
     Singleton() = default;
-    ~Singleton() = default;
+    virtual ~Singleton() = default;
 };
 
-#endif //_SINGLETON_H
+#endif // !_SINGLETON_H_
