@@ -1,5 +1,6 @@
 ﻿// 学学学
 #include <iostream>
+#include <vector>
 
 // GLEW нужно подключать до GLFW.
 // GLEW
@@ -11,16 +12,19 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#using <System.xml.dll>
+
 #include "SOIL2/SOIL2.h"
 #include "SOIL2/stb_image.h"
 
 #include "Render/ShaderProgram.h"
 #include "Render/Texture.h"
 #include "Core/Camera.h"
+#include "Visual/SceneObject.h"
 
 // прототипи функцій
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-void do_movement();
+void do_movement(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -42,6 +46,7 @@ GLfloat pitch = 0.0f; // тангаж навколо oX
 // field of view
 GLfloat fov = 45.0f; // тангаж навколо oX
 
+
 int main()
 {
 	//Инициализация GLFW
@@ -58,6 +63,7 @@ int main()
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
+
 	if (window == nullptr)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -154,22 +160,24 @@ int main()
 	Render::Texture texture1("../base/textures/container.jpg");
 	Render::Texture texture2("../base/textures/awesomeface.png");
 
-	glm::vec3 cubePositions[] = {
-		  glm::vec3(0.0f,  0.0f,  0.0f),
-		  glm::vec3(2.0f,  5.0f, -15.0f),
-		  glm::vec3(-1.5f, -2.2f, -2.5f),
-		  glm::vec3(-3.8f, -2.0f, -12.3f),
-		  glm::vec3(2.4f, -0.4f, -3.5f),
-		  glm::vec3(-1.7f,  3.0f, -7.5f),
-		  glm::vec3(1.3f, -2.0f, -2.5f),
-		  glm::vec3(1.5f,  2.0f, -2.5f),
-		  glm::vec3(1.5f,  0.2f, -1.5f),
-		  glm::vec3(-1.3f,  1.0f, -1.5f)
+	std::vector<Visual::SceneObject> objects = { 
+		Visual::SceneObject(Visual::Transform(glm::vec3(0.0f,  0.0f,  0.0f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(2.0f,  5.0f, -15.0f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(-1.5f, -2.2f, -2.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(-3.8f, -2.0f, -12.3f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(2.4f, -0.4f, -3.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(-1.7f,  3.0f, -7.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(1.3f, -2.0f, -2.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(1.5f,  2.0f, -2.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(1.5f,  0.2f, -1.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(-1.3f,  1.0f, -1.5f))),
 	};
 
 	auto&& camera = Camera::Instance();
 	camera.Position = glm::vec3(0.0f, 0.0f, 3.0f);
 	camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	//System::
 
 	// Игровой цикл
 	while (!glfwWindowShouldClose(window))
@@ -181,7 +189,7 @@ int main()
 
 		// Проверяем события и вызываем функции обратного вызова.
 		glfwPollEvents();
-		do_movement();
+		do_movement(window);
 
 		// Очистка буферу екрану
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -206,13 +214,11 @@ int main()
 
 
 		glBindVertexArray(VAO);
-		for (GLuint i = 0; i < 10; i++)
+		for (GLuint i = 0; i < objects.size(); i++)
 		{
-			glm::mat4 model(1.0f);
-			model = glm::translate(model, cubePositions[i]);
 			GLfloat angle = 20.0f * i;
-			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			shader.SetUniformMatrix4fv("model", model);
+			objects[i].GetTransform().SetRotation(glm::vec3(1.0f, 0.3f, 0.5f) * angle);
+			shader.SetUniformMatrix4fv("model", objects[i].GetTransform().GetModelMatrix());
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
@@ -255,7 +261,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 		fov = 45.0f;
 }
 
-void do_movement()
+bool _mouseFocus = false;
+void do_movement(GLFWwindow* window)
 {
 	auto&& camera = Camera::Instance();
 	// Управління камерою
@@ -273,6 +280,15 @@ void do_movement()
 	if (keys[GLFW_KEY_D])
 		camera.Position += glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
 
+	if (keys[GLFW_KEY_E])
+	{
+		_mouseFocus = !_mouseFocus;
+		if (_mouseFocus)
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
+
 	/*if (keys[GLFW_MOUSE_BUTTON_RIGHT])
 		fov = 10.0f;
 	else if (!keys[GLFW_MOUSE_BUTTON_RIGHT])
@@ -282,6 +298,8 @@ void do_movement()
 bool firstMouse = true;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
+	if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
+		return;
 	if (firstMouse) // эта переменная была проинициализирована значением true
 	{
 		lastX = static_cast<GLfloat>(xpos);
