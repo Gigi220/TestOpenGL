@@ -5,23 +5,21 @@
 // GLEW нужно подключать до GLFW.
 // GLEW
 #define GLEW_STATIC
-#include "GL/glew.h"
+#include <GL/glew.h>
 // GLFW
-#include "GLFW/glfw3.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
+#include <GLFW/glfw3.h>
 
-#using <System.xml.dll>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#include "SOIL2/SOIL2.h"
-#include "SOIL2/stb_image.h"
+#include <SOIL2/SOIL2.h>
+#include <SOIL2/stb_image.h>
 
 #include "Render/ShaderProgram.h"
 #include "Render/Texture.h"
 #include "Core/Camera.h"
 #include "Visual/SceneObject.h"
-
 // прототипи функцій
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void do_movement(GLFWwindow* window);
