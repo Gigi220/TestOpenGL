@@ -5,9 +5,11 @@
 #define _TEXTURE_H_
 
 #include <string.h>
-#include "GL/glew.h"
-#include "SOIL2/SOIL2.h"
-#include "SOIL2/stb_image.h"
+#include <GL/glew.h>
+#include <SOIL2/SOIL2.h>
+#include <SOIL2/stb_image.h>
+
+#include <boost/filesystem.hpp>
 
 namespace Render
 {
@@ -16,6 +18,8 @@ namespace Render
 	public:
 		Texture(const char* fileName)
 		{
+			_path = fileName;
+
 			glGenTextures(1, &_texture);
 			glBindTexture(GL_TEXTURE_2D, _texture);
 
@@ -48,6 +52,7 @@ namespace Render
 
 	private:
 		GLuint _texture;
+		boost::filesystem::path _path;
 		int _width;
 		int _height;
 		int _nrChannels;

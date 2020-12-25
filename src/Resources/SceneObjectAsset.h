@@ -8,9 +8,10 @@ namespace Resources
 	class SceneObjectAsset : public Asset
 	{
 	public:
+		SceneObjectAsset() = default;
 
-		virtual bool Load();
-		virtual bool Save();
+		bool Load(const std::string& path) override;
+		bool Save() override;
 
 	private:
 

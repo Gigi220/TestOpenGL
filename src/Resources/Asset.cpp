@@ -4,8 +4,9 @@
 
 namespace Resources
 {
-	bool Asset::Load()
+	bool Asset::Load(const std::string& path)
 	{
+		SetAssetPath(path);
 		return false;
 	}
 

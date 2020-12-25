@@ -13,6 +13,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <boost/lambda/lambda.hpp>
+#include <iterator>
+#include <algorithm>
+#include <boost/filesystem/config.hpp>
+
 #include <SOIL2/SOIL2.h>
 #include <SOIL2/stb_image.h>
 
@@ -20,6 +25,11 @@
 #include "Render/Texture.h"
 #include "Core/Camera.h"
 #include "Visual/SceneObject.h"
+#include "Resources/ResourceLoader.h"
+
+//#include "../../boost_1_66_0/boost/filesystem.hpp"
+
+
 // прототипи функцій
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void do_movement(GLFWwindow* window);
@@ -45,7 +55,7 @@ GLfloat pitch = 0.0f; // тангаж навколо oX
 GLfloat fov = 45.0f; // тангаж навколо oX
 
 
-int main()
+int main(int argc, char* argv[])
 {
 	//Инициализация GLFW
 	glfwInit();
@@ -74,7 +84,6 @@ int main()
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
-
 
 	// Захват курсора
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -153,6 +162,8 @@ int main()
 
 	glBindVertexArray(0); // Отвязка VAO
 
+	Resources::ResourceLoader::Instance().Load();
+
 	// всі текстури будуть правильно зчитуватись відносно Y-осі 
 	stbi_set_flip_vertically_on_load(true);
 	Render::Texture texture1("../base/textures/container.jpg");
@@ -174,8 +185,6 @@ int main()
 	auto&& camera = Camera::Instance();
 	camera.Position = glm::vec3(0.0f, 0.0f, 3.0f);
 	camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	//System::
 
 	// Игровой цикл
 	while (!glfwWindowShouldClose(window))

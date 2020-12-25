@@ -2,15 +2,15 @@
 #pragma once
 
 #include "Transform.h"
-#include "../Resources/Asset.h"
+#include "../Resources/SceneObjectAsset.h"
 
 namespace Visual
 {
-	class SceneObject : public Resources::Asset
+	class SceneObject : public Resources::SceneObjectAsset
 	{
 	public:
-		SceneObject() = default;
-		explicit SceneObject(const Transform& transform) : _transform(transform) { }
+		//SceneObject() = default;
+		explicit SceneObject(const Transform& transform) : SceneObjectAsset(), _transform(transform) { }
 
 		Transform& GetTransform() { return _transform; }
 

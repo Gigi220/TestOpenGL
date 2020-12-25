@@ -6,8 +6,6 @@
 
 #include <string>
 
-#using <System.xml.dll>
-
 namespace Resources
 {
 	enum class AssetType
@@ -23,7 +21,7 @@ namespace Resources
 		Asset() = default;
 		virtual ~Asset() = default;
 
-		virtual bool Load();
+		virtual bool Load(const std::string& path);
 		virtual bool Save();
 
 		void SetAssetId(const std::string& id) { _id = id; }
@@ -32,7 +30,7 @@ namespace Resources
 		const std::string& GetAssetId() const { return _id; }
 		const std::string& GetAssetPath() const { return _path; }
 
-	private:
+	protected:
 		std::string _id;
 		std::string _path;
 	};
