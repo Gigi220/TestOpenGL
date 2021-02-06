@@ -33,42 +33,32 @@ find_package(OpenGL REQUIRED)
 find_package(RTTR CONFIG REQUIRED Core)
 
 # source files
-set(_src_root_path "${CMAKE_SOURCE_DIR}/src")
 file(
 	GLOB_RECURSE _source_list 
 	LIST_DIRECTORIES false
-	"${_src_root_path}/*.c*"
-	"${_src_root_path}/*.h*"
+	"${CMAKE_SOURCE_DIR}/src/*.c*"
+	"${CMAKE_SOURCE_DIR}/src/*.h*"
 )
 
 foreach(_source IN ITEMS ${_source_list})
 	get_filename_component(_source_path "${_source}" PATH)
-	file(RELATIVE_PATH _source_path_rel "${_src_root_path}" "${_source_path}")
-	message("_source = ${_source}")
-	message("_source_path = ${_source_path}")
-	message("_source_path_rel =  ${_source_path_rel}")
+	file(RELATIVE_PATH _source_path_rel "${CMAKE_SOURCE_DIR}" "${_source_path}")
 	string(REPLACE "/" "\\" _group_path "${_source_path_rel}")
-	message("REPLACE = ${_group_path}")
 	source_group("${_group_path}" FILES "${_source}")
 endforeach()
 #-----------------------------------------
 
 # resources files
-set(_resources_root_path "${CMAKE_SOURCE_DIR}/base")
 file(
 	GLOB_RECURSE _resources_list 
 	LIST_DIRECTORIES false
-	"${_resources_root_path}/*.xml"
+	"${CMAKE_SOURCE_DIR}/base/*.xml"
 )
 
 foreach(_resource IN ITEMS ${_resources_list})
 	get_filename_component(_resource_path "${_resource}" PATH)
-	file(RELATIVE_PATH _resource_path_rel "${_resources_root_path}" "${_resource_path}")
-	message("_resource = ${_resource}")
-	message("_resource_path = ${_resource_path}")
-	message("_resource_path_rel =  ${_resource_path_rel}")
+	file(RELATIVE_PATH _resource_path_rel "${CMAKE_SOURCE_DIR}" "${_resource_path}")
 	string(REPLACE "/" "\\" _resource_group_path "${_resource_path_rel}")
-	message("REPLACE = ${_resource_group_path}")
 	source_group("${_resource_group_path}" FILES "${_resource}")
 endforeach()
 #-----------------------------------------
