@@ -1,36 +1,77 @@
+п»ї// е­¦е­¦е­¦
 #include <iostream>
+#include <vector>
 
-// GLEW нужно подключать до GLFW.
+// GLEW РЅСѓР¶РЅРѕ РїРѕРґРєР»СЋС‡Р°С‚СЊ РґРѕ GLFW.
 // GLEW
 #define GLEW_STATIC
 #include <GL/glew.h>
 // GLFW
 #include <GLFW/glfw3.h>
-#include "ShaderProgram.h"
 
-// Function prototypes
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <boost/lambda/lambda.hpp>
+#include <iterator>
+#include <algorithm>
+#include <boost/filesystem/config.hpp>
+
+#include <SOIL2/SOIL2.h>
+#include <SOIL2/stb_image.h>
+
+#include "Render/ShaderProgram.h"
+#include "Render/Texture.h"
+#include "Core/Camera.h"
+#include "Visual/SceneObject.h"
+#include "Resources/ResourceLoader.h"
+
+//#include "../../boost_1_66_0/boost/filesystem.hpp"
+
+
+// РїСЂРѕС‚РѕС‚РёРїРё С„СѓРЅРєС†С–Р№
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void do_movement(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-// Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
+// Р’С–РєРЅРѕ
+const GLuint WIDTH = 1024, HEIGHT = 720;
 
-int main()
+// РњР°СЃРёРІ РєР»Р°РІС–С€
+bool keys[1024];
+
+// Deltatimes
+GLfloat deltaTime = 0.0f;	// Р§Р°СЃ, РїСЂРѕР№РґРµРЅРёР№ РјС–Р¶ РѕСЃС‚Р°РЅРЅС–Рј С– РїРѕС‚РѕС‡РЅРёРј РєР°РґСЂРѕРј
+GLfloat lastFrame = 0.0f;  	// Р§Р°СЃ РІРёРІРѕРґСѓ РѕСЃС‚Р°РЅРЅСЊРѕРіРѕ РєР°РґСЂСѓ
+
+// РќР°Р»Р°С€С‚СѓРІР°РЅРЅСЏ РјРёС€РєС–
+GLfloat lastX = WIDTH / 2, lastY = HEIGHT / 2;
+GLfloat yaw = -90.0f; // СЂРёСЃРєР°РЅРЅСЏ РЅР°РІРєРѕР»Рѕ oY
+GLfloat pitch = 0.0f; // С‚Р°РЅРіР°Р¶ РЅР°РІРєРѕР»Рѕ oX
+
+// field of view
+GLfloat fov = 45.0f; // С‚Р°РЅРіР°Р¶ РЅР°РІРєРѕР»Рѕ oX
+
+
+int main(int argc, char* argv[])
 {
-	//Инициализация GLFW
+	//РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ GLFW
 	glfwInit();
-	//Настройка GLFW
-	//Задается минимальная требуемая версия OpenGL. 
-	//Мажорная 
+	//РќР°СЃС‚СЂРѕР№РєР° GLFW
+	//Р—Р°РґР°РµС‚СЃСЏ РјРёРЅРёРјР°Р»СЊРЅР°СЏ С‚СЂРµР±СѓРµРјР°СЏ РІРµСЂСЃРёСЏ OpenGL. 
+	//РњР°Р¶РѕСЂРЅР°СЏ 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	//Минорная
+	//РњРёРЅРѕСЂРЅР°СЏ
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	//Установка профайла для которого создается контекст
+	//РЈСЃС‚Р°РЅРѕРІРєР° РїСЂРѕС„Р°Р№Р»Р° РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ СЃРѕР·РґР°РµС‚СЃСЏ РєРѕРЅС‚РµРєСЃС‚
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	//Выключение возможности изменения размера окна
+	//Р’С‹РєР»СЋС‡РµРЅРёРµ РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РёР·РјРµРЅРµРЅРёСЏ СЂР°Р·РјРµСЂР° РѕРєРЅР°
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
+
 	if (window == nullptr)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -38,9 +79,14 @@ int main()
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	// Set the required callback functions
-	glfwSetKeyCallback(window, key_callback);
 
+	// РљРѕР»Р±РµРєС–
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+
+	// Р—Р°С…РІР°С‚ РєСѓСЂСЃРѕСЂР°
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
@@ -49,86 +95,149 @@ int main()
 		return -1;
 	}
 
+	glViewport(0, 0, WIDTH, HEIGHT);
+	glEnable(GL_DEPTH_TEST);
 
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
+	ShaderProgram shader = ShaderProgram("../base/shaders/texturesMatrix2.vs", "../base/shaders/textures2.fs");
 
-	glViewport(0, 0, width, height);
+	float vertices[] = {
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 
-	GLfloat vertices[] = {
-		// Позиции			 // Цвета
-		 0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // Нижний правый угол
-		-0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // Нижний левый угол
-		 0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // Верхний угол
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
-	//GLuint indices[] = {  // Помните, что мы начинаем с 0!
-	//	0, 1, 2   // Первый треугольник
-		//1, 2, 3    // Второй треугольник
-	//};
 
-	GLuint VBO, VAO;// , IBO; // IBO = EBO  index buffer object
+	GLuint VBO, VAO; // IBO = EBO  index buffer object
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-	//glGenBuffers(1, &IBO); // IBO = EBO
 	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	// Атрибут с координатами
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*) 0);
+	// РђС‚СЂРёР±СѓС‚ СЃ РєРѕРѕСЂРґРёРЅР°С‚Р°РјРё
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*) 0);
 	glEnableVertexAttribArray(0);
-	// Атрибут с цветом
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
+	// РђС‚СЂРёР±СѓС‚ СЃ С‚РµРєСЃС‚СѓСЂРѕР№
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*) (3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2);
 
-	glBindVertexArray(0); // Отвязка VAO
+	glBindVertexArray(0); // РћС‚РІСЏР·РєР° VAO
 
+	Resources::ResourceLoader::Instance().Load();
 
-	// Режим отрісовкі
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// РІСЃС– С‚РµРєСЃС‚СѓСЂРё Р±СѓРґСѓС‚СЊ РїСЂР°РІРёР»СЊРЅРѕ Р·С‡РёС‚СѓРІР°С‚РёСЃСЊ РІС–РґРЅРѕСЃРЅРѕ Y-РѕСЃС– 
+	stbi_set_flip_vertically_on_load(true);
+	Render::Texture texture1("../base/textures/container.jpg");
+	Render::Texture texture2("../base/textures/awesomeface.png");
 
-	// Игровой цикл
+	std::vector<Visual::SceneObject> objects = { 
+		Visual::SceneObject(Visual::Transform(glm::vec3(0.0f,  0.0f,  0.0f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(2.0f,  5.0f, -15.0f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(-1.5f, -2.2f, -2.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(-3.8f, -2.0f, -12.3f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(2.4f, -0.4f, -3.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(-1.7f,  3.0f, -7.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(1.3f, -2.0f, -2.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(1.5f,  2.0f, -2.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(1.5f,  0.2f, -1.5f))),
+		Visual::SceneObject(Visual::Transform(glm::vec3(-1.3f,  1.0f, -1.5f))),
+	};
+
+	auto&& camera = Camera::Instance();
+	camera.Position = glm::vec3(0.0f, 0.0f, 3.0f);
+	camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	// РРіСЂРѕРІРѕР№ С†РёРєР»
 	while (!glfwWindowShouldClose(window))
 	{
-		// Проверяем события и вызываем функции обратного вызова.
+		// Р РѕР·СЂР°С…СѓРЅРѕРє РґРµР»СЊС‚Рё РїРѕС‚РѕС‡РЅРѕРіРѕ РєР°РґСЂСѓ
+		GLfloat currentFrame = static_cast<GLfloat>(glfwGetTime());
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		// РџСЂРѕРІРµСЂСЏРµРј СЃРѕР±С‹С‚РёСЏ Рё РІС‹Р·С‹РІР°РµРј С„СѓРЅРєС†РёРё РѕР±СЂР°С‚РЅРѕРіРѕ РІС‹Р·РѕРІР°.
 		glfwPollEvents();
+		do_movement(window);
 
-		// Очистка буферу екрану
+		// РћС‡РёСЃС‚РєР° Р±СѓС„РµСЂСѓ РµРєСЂР°РЅСѓ
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Використання шейдерів і отрісовка
-		ShaderProgram sh = ShaderProgram("../base/shaders/standart.vs", "../base/shaders/standart.fs");
-		sh.Use();
+		// Bind Texture
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1.GetData());
+		shader.SetUniform1i("ourTexture1", 0);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2.GetData());
+		shader.SetUniform1i("ourTexture2", 1);
 
-		// Обновляем цвет формы
-		/*GLfloat timeValue = glfwGetTime();
-		GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
-		sh.SetUniform("ourColor", Math::Vector3(0.0f, greenValue, 0.0f));*/
-		GLfloat timeValue = glfwGetTime();
-		GLfloat greenValue = (sin(timeValue * 1.5f) / 2.5f) + 1.0f;
-		sh.SetUniform("timer", greenValue);
+		// Р’РёРєРѕСЂРёСЃС‚Р°РЅРЅСЏ С€РµР№РґРµСЂС–РІ С– РѕС‚СЂС–СЃРѕРІРєР°
+		shader.Use();
+
+		glm::mat4 projection(1.0f);
+		projection = glm::perspective(glm::radians(fov), static_cast<float>(WIDTH / HEIGHT), 0.1f, 100.0f);
+
+		shader.SetUniformMatrix4fv("view", camera.GetViewMatrix());
+		shader.SetUniformMatrix4fv("projection", projection);
+
 
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		//glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		for (GLuint i = 0; i < objects.size(); i++)
+		{
+			GLfloat angle = 20.0f * i;
+			objects[i].GetTransform().SetRotation(glm::vec3(1.0f, 0.3f, 0.5f) * angle);
+			shader.SetUniformMatrix4fv("model", objects[i].GetTransform().GetModelMatrix());
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 		glBindVertexArray(0);
 
-
-		// Меняем буферы местами
+		// РњРµРЅСЏРµРј Р±СѓС„РµСЂС‹ РјРµСЃС‚Р°РјРё
 		glfwSwapBuffers(window);
 	}
-	// Видалення масиву вершин
+	// Р’РёРґР°Р»РµРЅРЅСЏ РјР°СЃРёРІСѓ РІРµСЂС€РёРЅ
 	glDeleteVertexArrays(1, &VAO);
-	// Видалення вершинного буфера
+	// Р’РёРґР°Р»РµРЅРЅСЏ РІРµСЂС€РёРЅРЅРѕРіРѕ Р±СѓС„РµСЂР°
 	glDeleteBuffers(1, &VBO);
-	// Видалення індексного буфера
-	//glDeleteBuffers(1, &IBO);
 
 	glfwTerminate();
 	return 0;
@@ -136,8 +245,96 @@ int main()
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-	// Когда пользователь нажимает ESC, мы устанавливаем свойство WindowShouldClose в true, 
-	// и приложение после этого закроется
+	// РљРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°Р¶РёРјР°РµС‚ ESC, РјС‹ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЃРІРѕР№СЃС‚РІРѕ WindowShouldClose РІ true, 
+	// Рё РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕСЃР»Рµ СЌС‚РѕРіРѕ Р·Р°РєСЂРѕРµС‚СЃСЏ
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key >= 0 && key < 1024)
+	{
+		if (action == GLFW_PRESS)
+			keys[key] = true;
+		else if (action == GLFW_RELEASE)
+			keys[key] = false;
+	}
 }
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	if (fov >= 1.0f && fov <= 45.0f)
+		fov -= static_cast<GLfloat>(yoffset);
+	if (fov <= 1.0f)
+		fov = 1.0f;
+	if (fov >= 45.0f)
+		fov = 45.0f;
+}
+
+bool _mouseFocus = false;
+void do_movement(GLFWwindow* window)
+{
+	auto&& camera = Camera::Instance();
+	// РЈРїСЂР°РІР»С–РЅРЅСЏ РєР°РјРµСЂРѕСЋ
+	GLfloat cameraSpeed = 1.5f * deltaTime;
+	if (keys[GLFW_KEY_W])
+	{
+		if (keys[GLFW_KEY_LEFT_SHIFT])
+			cameraSpeed *= 3.0f;
+		camera.Position += cameraSpeed * camera.Front;
+	}
+	if (keys[GLFW_KEY_S])
+		camera.Position -= cameraSpeed * camera.Front;
+	if (keys[GLFW_KEY_A])
+		camera.Position -= glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+	if (keys[GLFW_KEY_D])
+		camera.Position += glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+
+	if (keys[GLFW_KEY_E])
+	{
+		_mouseFocus = !_mouseFocus;
+		if (_mouseFocus)
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
+
+	/*if (keys[GLFW_MOUSE_BUTTON_RIGHT])
+		fov = 10.0f;
+	else if (!keys[GLFW_MOUSE_BUTTON_RIGHT])
+		fov = 45.0f;*/
+}
+
+bool firstMouse = true;
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
+		return;
+	if (firstMouse) // СЌС‚Р° РїРµСЂРµРјРµРЅРЅР°СЏ Р±С‹Р»Р° РїСЂРѕРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅР° Р·РЅР°С‡РµРЅРёРµРј true
+	{
+		lastX = static_cast<GLfloat>(xpos);
+		lastY = static_cast<GLfloat>(ypos);
+		firstMouse = false;
+	}
+
+	GLfloat xoffset = static_cast<GLfloat>(xpos) - lastX;
+	GLfloat yoffset = lastY - static_cast<GLfloat>(ypos); // РћР±СЂР°С‚РЅС‹Р№ РїРѕСЂСЏРґРѕРє РІС‹С‡РёС‚Р°РЅРёСЏ РїРѕС‚РѕРјСѓ С‡С‚Рѕ РѕРєРѕРЅРЅС‹Рµ Y-РєРѕРѕСЂРґРёРЅР°С‚С‹ РІРѕР·СЂР°СЃС‚Р°СЋС‚ СЃ РІРµСЂС…Сѓ РІРЅРёР· 
+	lastX = static_cast<GLfloat>(xpos);
+	lastY = static_cast<GLfloat>(ypos);
+
+	GLfloat sensitivity = 0.08f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+	front.y = sin(glm::radians(pitch));
+	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+	Camera::Instance().Front = glm::normalize(front);
+}
+

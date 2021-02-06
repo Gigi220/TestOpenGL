@@ -10,6 +10,7 @@ bin/
 out/
 cmake-build-*/
 .vs/
+rttr-0.9.6/
 
 ### CMake ###
 CMakeCache.txt
